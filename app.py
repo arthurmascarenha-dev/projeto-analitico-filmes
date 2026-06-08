@@ -94,42 +94,83 @@ def painel_analitico():
     st.markdown("Explore o impacto cruzado das variáveis sobre os indicadores de classificação do público.")
     st.markdown("---")
     
-    # Painel Lateral de Filtros (Fatores de Produção)
-    st.sidebar.header("Filtros Segmentadores")
+    # Painel Lateral de Filtros Avançados
+    st.sidebar.header("Painel de Controle")
     
     # Filtro 1: Ano de Lançamento (d_calendario)
     anos = sorted(df_calendario["ano"].dropna().unique().astype(int))
     ano_ini, ano_fim = st.sidebar.select_slider("1. Período Histórico", options=anos, value=(min(anos), max(anos)))
     
-    # Filtro 2: Gênero (tb_genero)
-    lista_gen = ["Todos"] + sorted(df_genero["nome_genero"].dropna().tolist())
-    gen_sel = st.sidebar.selectbox("2. Gênero", lista_gen)
+    st.sidebar.markdown("---")
     
-    # Filtro 3: Direção (tb_diretor)
-    lista_dir = ["Todos"] + sorted(df_diretor["nome_diretor"].dropna().tolist())
-    dir_sel = st.sidebar.selectbox("3. Diretor", lista_dir)
+    # Filtro 2: Gênero (Busca + Seleção)
+    txt_gen = st.sidebar.text_input("2. Buscar Gênero", "").strip().lower()
+    lista_gen_base = sorted(df_genero["nome_genero"].dropna().tolist())
+    if txt_gen:
+        lista_gen_filtrada = [g for g in lista_gen_base if txt_gen in g.lower()]
+    else:
+        lista_gen_filtrada = lista_gen_base
+    gen_sel = st.sidebar.selectbox("Selecionar Gênero", ["Todos"] + lista_gen_filtrada)
     
-    # Filtro 4: Elenco (tb_ator)
-    lista_act = ["Todos"] + sorted(df_ator["nome_ator"].dropna().tolist())
-    act_sel = st.sidebar.selectbox("4. Ator/Atriz Principal", lista_act)
+    st.sidebar.markdown("---")
     
+    # Filtro 3: Diretor (Busca + Seleção)
+    txt_dir = st.sidebar.text_input("3. Buscar Diretor", "").strip().lower()
+    lista_dir_base = sorted(df_diretor["nome_diretor"].dropna().tolist())
+    if txt_dir:
+        lista_dir_filtrada = [d for d in lista_dir_base if txt_dir in d.lower()]
+    else:
+        lista_dir_filtrada = lista_dir_base
+    dir_sel = st.sidebar.selectbox("Selecionar Diretor", ["Todos"] + lista_dir_filtrada)
+    
+    st.sidebar.markdown("---")
+    
+    # Filtro 4: Ator/Atriz (Busca + Seleção)
+    txt_act = st.sidebar.text_input("4. Buscar Ator/Atriz", "").strip().lower()
+    lista_act_base = sorted(df_ator["nome_ator"].dropna().tolist())
+    if txt_act:
+        lista_act_filtrada = [a for a in lista_act_base if txt_act in a.lower()]
+    else:
+        lista_act_filtrada = lista_act_base
+    act_sel = st.sidebar.selectbox("Selecionar Ator/Atriz", ["Todos"] + lista_act_filtrada)
+    
+    st.sidebar.markdown("---")
+    
+    # Filtro 5: Filme (Busca + Seleção na Fato)
+    txt_film = st.sidebar.text_input("5. Buscar Filme por Título", "").strip().lower()
+    lista_film_base = sorted(df_filme["title"].dropna().tolist())
+    if txt_film:
+        lista_film_filtrada = [f for f in lista_film_base if txt_film in f.lower()]
+    else:
+        lista_film_filtrada = lista_film_base
+    film_sel = st.sidebar.selectbox("Selecionar Filme", ["Todos"] + lista_film_filtrada)
+    
+    # ----------------------------------------------------
     # Motor de Filtragem Cruzada Relacional
+    # ----------------------------------------------------
     datas_validas = df_calendario[(df_calendario["ano"] >= ano_ini) & (df_calendario["ano"] <= ano_fim)]["data"]
     df_f = df_filme[df_filme["data_lanc"].isin(datas_validas)]
     
+    # Resolução do Filtro de Gênero
     if gen_sel != "Todos":
         id_g = df_genero[df_genero["nome_genero"] == gen_sel]["id_genero"].values[0]
         ids_f_g = df_filme_genero[df_filme_genero["id_genero"] == id_g]["id_filme"]
         df_f = df_f[df_f["id_filme"].isin(ids_f_g)]
         
+    # Resolução do Filtro de Diretor
     if dir_sel != "Todos":
         id_d = df_diretor[df_diretor["nome_diretor"] == dir_sel]["id_diretor"].values[0]
         df_f = df_f[df_f["id_diretor"] == id_d]
         
+    # Resolução do Filtro de Ator/Atriz
     if act_sel != "Todos":
         id_a = df_ator[df_ator["nome_ator"] == act_sel]["id_ator"].values[0]
         ids_f_a = df_filme_ator[df_filme_ator["id_ator"] == id_a]["id_filme"]
         df_f = df_f[df_f["id_filme"].isin(ids_f_a)]
+        
+    # Resolução do Filtro de Filme Específico
+    if film_sel != "Todos":
+        df_f = df_f[df_f["title"] == film_sel]
         
     # Processamento da Matriz de KPIs
     total_titulos = int(df_f["id_filme"].count())
@@ -185,12 +226,10 @@ def painel_analitico():
     st.subheader("📋 Resumo Geral e Detalhado das Obras Selecionadas")
     
     if not df_f.empty:
-        # Cruzamento estruturado para enriquecer a tabela fato com a dimensão de diretores
         df_resumo_geral = df_f[["title", "id_diretor", "ano_lanc", "vote_average", "vote_count", "popularity", "budget", "revenue"]].merge(
             df_diretor, on="id_diretor", how="left"
         ).sort_values(by="vote_average", ascending=False)
         
-        # Formatação de colunas numéricas e strings antes de exibir no componente
         df_resumo_geral["budget"] = df_resumo_geral["budget"].map(lambda x: f"$ {x:,.2f}" if x > 0 else "Não Declarado")
         df_resumo_geral["revenue"] = df_resumo_geral["revenue"].map(lambda x: f"$ {x:,.2f}" if x > 0 else "Não Declarado")
         df_resumo_geral["ano_lanc"] = df_resumo_geral["ano_lanc"].fillna("N/A").astype(str).str.replace(".0", "", regex=False)
@@ -212,7 +251,7 @@ def painel_analitico():
             hide_index=True
         )
     else:
-        st.info("Nenhum filme corresponde aos critérios de filtragem selecionados para exibição do resumo.")
+        st.info("Nenhum filme corresponde aos critérios de busca selecionados.")
 
 # 5. Roteamento Nativo do Sistema de Menu Multi-Páginas
 navegacao = st.navigation([
