@@ -1,7 +1,7 @@
 # Projeto Analítico: Classificações e Avaliações Cinematográficas (TMDB)
 
 ## 🔗 Link de Acesso Público
-A aplicação está em produção e pode ser acedida em: [https://aobtads.streamlit.app/](https://aobtads.streamlit.app/)
+O projeto pode ser acessado em: [https://aobtads.streamlit.app/](https://aobtads.streamlit.app/)
 
 ---
 
