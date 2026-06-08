@@ -41,11 +41,12 @@ O banco de dados original foi decomposto e normalizado na 3ª Forma Normal (3FN)
 
 | Nome do KPI | Fórmula Analítica | Objetivo do Indicador | Tipo de Sucesso |
 | :--- | :--- | :--- | :--- |
-| **Amostragem** | $$\text{Contagem Distinct}(\text{id\_filme})$$ | Monitorar o volume total de títulos que atendem aos filtros em memória. | Operacional |
-| **Volume de Votos** | $$\sum(\text{vote\_count})$$ | Mensurar o tamanho da base amostral e o engajamento absoluto do público. | Popularidade |
-| **Nota Média Ponderada**| $$\frac{\sum(\text{vote\_average} \times \text{vote\_count})}{\sum(\text{vote\_count})}$$ | Mitigar distorções de notas altas baseadas em poucos votos, extraindo o valor crítico real. | Crítico |
-| **Popularidade Média** | $$\text{Média}(\text{popularity})$$ | Avaliar a tração e o interesse contínuo gerado pelas variáveis escolhidas. | Engajamento |
-| **Taxa de Excelência** | $$\frac{\text{Contagem}(\text{vote\_average} \ge 7.0)}{\text{Total de Filmes}} \times 100$$ | Identificar a proporção de obras com alto índice de aprovação no segmento. | Qualidade |
+| **Amostragem** | $$\text{Contagem de Filmes}$$ | Monitorar o volume total de títulos que atendem aos filtros em memória. | Operacional |
+| **Volume de Votos** | $$\sum(\text{Votos})$$ | Mensurar o tamanho da base amostral e o engajamento absoluto do público. | Popularidade |
+| **Nota Média Ponderada**| $$\frac{\sum(\text{Nota} \times \text{Votos})}{\sum(\text{Votos})}$$ | Mitigar distorções de notas altas baseadas em poucos votos, extraindo o valor crítico real. | Crítico |
+| **Popularidade Média** | $$\text{Média}(\text{Popularidade})$$ | Avaliar a tração e o interesse contínuo gerado pelas variáveis escolhidas. | Engajamento |
+| **Taxa de Excelência** | $$\frac{\text{Contagem}(\text{Nota} \ge 7.0)}{\text{Total de Filmes}} \times 100$$ | Identificar a proporção de obras com alto índice de aprovação no segmento. | Qualidade |
+
 ---
 
 ## 5. Modelo Relacional
