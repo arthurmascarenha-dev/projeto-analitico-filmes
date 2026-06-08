@@ -46,7 +46,6 @@ O banco de dados original foi decomposto e normalizado na 3ª Forma Normal (3FN)
 | **Nota Média Ponderada**| $$\frac{\sum(\text{vote\_average} \times \text{vote\_count})}{\sum(\text{vote\_count})}$$ | Mitigar distorções de notas altas baseadas em poucos votos, extraindo o valor crítico real. | Crítico |
 | **Popularidade Média** | $$\text{Média}(\text{popularity})$$ | Avaliar a tração e o interesse contínuo gerado pelas variáveis escolhidas. | Engajamento |
 | **Taxa de Excelência** | $$\frac{\text{Contagem}(\text{vote\_average} \ge 7.0)}{\text{Total de Filmes}} \times 100$$ | Identificar a proporção de obras com alto índice de aprovação no segmento. | Qualidade |
-
 ---
 
 ## 5. Modelo Relacional
