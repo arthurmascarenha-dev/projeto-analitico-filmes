@@ -3,14 +3,12 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# 1. Configuração Global da Página e Estilo Visual (Princípios de Gestalt)
 st.set_page_config(
     page_title="Cinema Ratings Analytics",
     page_icon="🎬",
     layout="wide"
 )
 
-# Injeção de CSS para customização dos cartões de KPI focados em Notas e Votos
 st.markdown("""
     <style>
     [data-testid="stMetricValue"] {
@@ -34,7 +32,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Pipeline de ETL com Cache Centralizado
 @st.cache_data
 def carregar_dados_sistema():
     filme = pd.read_csv("tb_filme.csv", sep=";")
@@ -45,7 +42,6 @@ def carregar_dados_sistema():
     filme_ator = pd.read_csv("tb_filme_ator.csv", sep=";")
     calendario = pd.read_csv("d_calendario.csv", sep=";")
     
-    # Padronização de tipos temporais
     filme["data_lanc"] = pd.to_datetime(filme["data_lanc"], errors="coerce")
     calendario["data"] = pd.to_datetime(calendario["data"], errors="coerce")
     filme["ano_lanc"] = filme["data_lanc"].dt.year
@@ -54,7 +50,6 @@ def carregar_dados_sistema():
 
 df_filme, df_genero, df_filme_genero, df_diretor, df_ator, df_filme_ator, df_calendario = carregar_dados_sistema()
 
-# 3. Definição da Página Inicial Introdutória
 def pagina_inicial():
     st.title("🎬 Projeto Analítico de Dados Abertos — Indústria Cinematográfica")
     st.markdown("### Entendimento do Negócio e Arquitetura do Projeto")
@@ -88,91 +83,86 @@ def pagina_inicial():
     
     st.success("Use o menu de navegação na barra lateral esquerda para acessar o Painel Analítico Interativo.")
 
-# 4. Definição do Painel Analítico Interativo
 def painel_analitico():
     st.title("📊 Painel Analítico de Avaliações")
-    st.markdown("Explore o impacto cruzado das variáveis sobre os indicadores de classificação do público.")
+    st.markdown("Impacto cruzado das variáveis sobre os indicadores de classificação do público.")
     st.markdown("---")
     
-    # Painel Lateral de Filtros Avançados
     st.sidebar.header("Painel de Controle")
     
-    # Filtro 1: Ano de Lançamento (d_calendario)
     anos = sorted(df_calendario["ano"].dropna().unique().astype(int))
-    ano_ini, ano_fim = st.sidebar.select_slider("1. Período Histórico", options=anos, value=(min(anos), max(anos)))
+    ano_ini, ano_fim = st.sidebar.select_slider("1. Ano de Lançamento", options=anos, value=(min(anos), max(anos)))
+    
+    datas_validas = df_calendario[(df_calendario["ano"] >= ano_ini) & (df_calendario["ano"] <= ano_fim)]["data"]
+    df_escopo = df_filme[df_filme["data_lanc"].isin(datas_validas)]
     
     st.sidebar.markdown("---")
     
-    # Filtro 2: Gênero (Busca + Seleção)
-    txt_gen = st.sidebar.text_input("2. Buscar Gênero", "").strip().lower()
-    lista_gen_base = sorted(df_genero["nome_genero"].dropna().tolist())
-    if txt_gen:
-        lista_gen_filtrada = [g for g in lista_gen_base if txt_gen in g.lower()]
-    else:
-        lista_gen_filtrada = lista_gen_base
-    gen_sel = st.sidebar.selectbox("Selecionar Gênero", ["Todos"] + lista_gen_filtrada)
-    
-    st.sidebar.markdown("---")
-    
-    # Filtro 3: Diretor (Busca + Seleção)
-    txt_dir = st.sidebar.text_input("3. Buscar Diretor", "").strip().lower()
-    lista_dir_base = sorted(df_diretor["nome_diretor"].dropna().tolist())
+    txt_dir = st.sidebar.text_input("2. Buscar Diretor", "").strip().lower()
+    ids_diretores_no_escopo = df_escopo["id_diretor"].unique()
+    df_diretores_disponiveis = df_diretor[df_diretor["id_diretor"].isin(ids_diretores_no_escopo)]
+    lista_dir_base = sorted(df_diretores_disponiveis["nome_diretor"].dropna().tolist())
     if txt_dir:
         lista_dir_filtrada = [d for d in lista_dir_base if txt_dir in d.lower()]
     else:
         lista_dir_filtrada = lista_dir_base
     dir_sel = st.sidebar.selectbox("Selecionar Diretor", ["Todos"] + lista_dir_filtrada)
     
+    if dir_sel != "Todos":
+        id_d = df_diretor[df_diretor["nome_diretor"] == dir_sel]["id_diretor"].values[0]
+        df_escopo = df_escopo[df_escopo["id_diretor"] == id_d]
+        
     st.sidebar.markdown("---")
     
-    # Filtro 4: Ator/Atriz (Busca + Seleção)
+    txt_gen = st.sidebar.text_input("3. Buscar Gênero", "").strip().lower()
+    ids_filmes_no_escopo = df_escopo["id_filme"].unique()
+    ids_generos_no_escopo = df_filme_genero[df_filme_genero["id_filme"].isin(ids_filmes_no_escopo)]["id_genero"].unique()
+    df_generos_disponiveis = df_genero[df_genero["id_genero"].isin(ids_generos_no_escopo)]
+    lista_gen_base = sorted(df_generos_disponiveis["nome_genero"].dropna().tolist())
+    if txt_gen:
+        lista_gen_filtrada = [g for g in lista_gen_base if txt_gen in g.lower()]
+    else:
+        lista_gen_filtrada = lista_gen_base
+    gen_sel = st.sidebar.selectbox("Selecionar Gênero", ["Todos"] + lista_gen_filtrada)
+    
+    if gen_sel != "Todos":
+        id_g = df_genero[df_genero["nome_genero"] == gen_sel]["id_genero"].values[0]
+        ids_f_g = df_filme_genero[df_filme_genero["id_genero"] == id_g]["id_filme"]
+        df_escopo = df_escopo[df_escopo["id_filme"].isin(ids_f_g)]
+        
+    st.sidebar.markdown("---")
+    
     txt_act = st.sidebar.text_input("4. Buscar Ator/Atriz", "").strip().lower()
-    lista_act_base = sorted(df_ator["nome_ator"].dropna().tolist())
+    ids_filmes_no_escopo = df_escopo["id_filme"].unique()
+    ids_atores_no_escopo = df_filme_ator[df_filme_ator["id_filme"].isin(ids_filmes_no_escopo)]["id_ator"].unique()
+    df_atores_disponiveis = df_ator[df_ator["id_ator"].isin(ids_atores_no_escopo)]
+    lista_act_base = sorted(df_atores_disponiveis["nome_ator"].dropna().tolist())
     if txt_act:
         lista_act_filtrada = [a for a in lista_act_base if txt_act in a.lower()]
     else:
         lista_act_filtrada = lista_act_base
     act_sel = st.sidebar.selectbox("Selecionar Ator/Atriz", ["Todos"] + lista_act_filtrada)
     
+    if act_sel != "Todos":
+        id_a = df_ator[df_ator["nome_ator"] == act_sel]["id_ator"].values[0]
+        ids_f_a = df_filme_ator[df_filme_ator["id_ator"] == id_a]["id_filme"]
+        df_escopo = df_escopo[df_escopo["id_filme"].isin(ids_f_a)]
+        
     st.sidebar.markdown("---")
     
-    # Filtro 5: Filme (Busca + Seleção na Fato)
     txt_film = st.sidebar.text_input("5. Buscar Filme por Título", "").strip().lower()
-    lista_film_base = sorted(df_filme["title"].dropna().tolist())
+    lista_film_base = sorted(df_escopo["title"].dropna().tolist())
     if txt_film:
         lista_film_filtrada = [f for f in lista_film_base if txt_film in f.lower()]
     else:
         lista_film_filtrada = lista_film_base
     film_sel = st.sidebar.selectbox("Selecionar Filme", ["Todos"] + lista_film_filtrada)
     
-    # ----------------------------------------------------
-    # Motor de Filtragem Cruzada Relacional
-    # ----------------------------------------------------
-    datas_validas = df_calendario[(df_calendario["ano"] >= ano_ini) & (df_calendario["ano"] <= ano_fim)]["data"]
-    df_f = df_filme[df_filme["data_lanc"].isin(datas_validas)]
-    
-    # Resolução do Filtro de Gênero
-    if gen_sel != "Todos":
-        id_g = df_genero[df_genero["nome_genero"] == gen_sel]["id_genero"].values[0]
-        ids_f_g = df_filme_genero[df_filme_genero["id_genero"] == id_g]["id_filme"]
-        df_f = df_f[df_f["id_filme"].isin(ids_f_g)]
-        
-    # Resolução do Filtro de Diretor
-    if dir_sel != "Todos":
-        id_d = df_diretor[df_diretor["nome_diretor"] == dir_sel]["id_diretor"].values[0]
-        df_f = df_f[df_f["id_diretor"] == id_d]
-        
-    # Resolução do Filtro de Ator/Atriz
-    if act_sel != "Todos":
-        id_a = df_ator[df_ator["nome_ator"] == act_sel]["id_ator"].values[0]
-        ids_f_a = df_filme_ator[df_filme_ator["id_ator"] == id_a]["id_filme"]
-        df_f = df_f[df_f["id_filme"].isin(ids_f_a)]
-        
-    # Resolução do Filtro de Filme Específico
     if film_sel != "Todos":
-        df_f = df_f[df_f["title"] == film_sel]
+        df_escopo = df_escopo[df_escopo["title"] == film_sel]
         
-    # Processamento da Matriz de KPIs
+    df_f = df_escopo
+    
     total_titulos = int(df_f["id_filme"].count())
     votos_totais = int(df_f["vote_count"].sum())
     
@@ -182,7 +172,6 @@ def painel_analitico():
     filmes_bons = df_f[df_f["vote_average"] >= 7.0]["id_filme"].count()
     taxa_excelencia = (filmes_bons / total_titulos * 100) if total_titulos > 0 else 0.0
     
-    # Renderização dos Cartões de Métricas
     kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
     with kpi1:
         st.metric("Amostragem", f"{total_titulos:,} Filmes")
@@ -197,7 +186,6 @@ def painel_analitico():
         
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Visualização de Gráficos
     g_esq, g_dir = st.columns([1.2, 1.8])
     
     with g_esq:
@@ -221,7 +209,6 @@ def painel_analitico():
         else:
             st.warning("Dados insuficientes para renderização gráfica.")
         
-    # Tabela: Resumo Geral dos Filmes Filtrados
     st.markdown("---")
     st.subheader("📋 Resumo Geral e Detalhado das Obras Selecionadas")
     
@@ -253,7 +240,6 @@ def painel_analitico():
     else:
         st.info("Nenhum filme corresponde aos critérios de busca selecionados.")
 
-# 5. Roteamento Nativo do Sistema de Menu Multi-Páginas
 navegacao = st.navigation([
     st.Page(pagina_inicial, title="Apresentação do Projeto", icon="🏠"),
     st.Page(painel_analitico, title="Painel Analítico Interativo", icon="📊")
