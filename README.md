@@ -25,15 +25,28 @@ O banco de dados original foi decomposto e normalizado na 3ª Forma Normal (3FN)
 
 | Tabela | Coluna | Tipo de Dado | Descrição / Regra de Negócio |
 | :--- | :--- | :--- | :--- |
-| `tb_filme` | `id_filme` | INT (PK) | Identificador único do filme. |
-| `tb_filme` | `title` | VARCHAR | Título original da obra. |
-| `tb_filme` | `vote_average` | FLOAT | Média das notas atribuídas pelos utilizadores (0 a 10). |
-| `tb_filme` | `vote_count` | INT | Quantidade total de votos recebidos pela obra. |
-| `tb_filme` | `popularity` | FLOAT | Índice dinâmico de tração e engajamento do TMDB. |
-| `tb_filme` | `data_lanc` | DATE | Data de lançamento oficial. |
-| `tb_genero` | `id_genero` | INT (PK) | Identificador único do gênero. |
-| `tb_genero` | `nome_genero` | VARCHAR | Nome descritivo do gênero cinematográfico. |
-| `tb_diretor`| `id_diretor` | INT (PK) | Identificador único do diretor principal. |
+| `tb_filme` | `id_filme` | INT (PK) | Identificador único e exclusivo de cada obra cinematográfica. |
+| `tb_filme` | `title` | VARCHAR | Título oficial distribuído comercialmente. |
+| `tb_filme` | `vote_average` | FLOAT | Média aritmética simples das notas atribuídas pelos usuários (0 a 10). |
+| `tb_filme` | `vote_count` | INT | Volume absoluto de votos computados para o título. |
+| `tb_filme` | `popularity` | FLOAT | Índice de tração, acessos e buscas diárias calculado pelo TMDB. |
+| `tb_filme` | `budget` | FLOAT | Orçamento total declarado para a produção da obra em dólares ($). |
+| `tb_filme` | `revenue` | FLOAT | Faturamento bruto global acumulado nas bilheterias em dólares ($). |
+| `tb_filme` | `data_lanc` | DATE | Data de lançamento oficial do filme no mercado de origem. |
+| `tb_filme` | `id_diretor` | INT (FK) | Chave estrangeira que aponta para o realizador na tabela `tb_diretor`. |
+| `tb_filme` | `ano_lanc` | INT | Atributo derivado via código correspondente ao ano da `data_lanc`. |
+| `tb_genero` | `id_genero` | INT (PK) | Identificador único de cada gênero cinematográfico. |
+| `tb_genero` | `nome_genero` | VARCHAR | Nome descritivo da classificação do gênero (ex: Ação, Drama, Comédia). |
+| `tb_filme_genero` | `id_filme` | INT (FK) | Parte da chave primária composta; aponta para `tb_filme`. |
+| `tb_filme_genero` | `id_genero` | INT (FK) | Parte da chave primária composta; aponta para `tb_genero`. |
+| `tb_diretor` | `id_diretor` | INT (PK) | Identificador único de cada diretor mapeado no ecossistema. |
+| `tb_diretor` | `nome_diretor` | VARCHAR | Nome completo do diretor principal da obra. |
+| `tb_ator` | `id_ator` | INT (PK) | Identificador único de cada ator ou atriz mapeado no ecossistema. |
+| `tb_ator` | `nome_ator` | VARCHAR | Nome completo do integrante do elenco principal. |
+| `tb_filme_ator` | `id_filme` | INT (FK) | Parte da chave primária composta; aponta para `tb_filme`. |
+| `tb_filme_ator` | `id_ator` | INT (FK) | Parte da chave primária composta; aponta para `tb_ator`. |
+| `d_calendario` | `data` | DATE (PK) | Chave primária temporal contínua que faz a ligação com a fato. |
+| `d_calendario` | `ano` | INT | Ano civil extraído da respectiva data para indexação no slider. |
 
 ---
 
